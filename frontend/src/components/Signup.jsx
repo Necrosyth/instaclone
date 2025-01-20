@@ -25,7 +25,7 @@ const Signup = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            const res = await axios.post('https://instaclone-g9h5.onrender.com/api/v1/user/register', input, {
+            const res = await axios.post('http://localhost:8000/api/v1/user/register', input, {
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -42,7 +42,8 @@ const Signup = () => {
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.message);
+            const errorMessage = error.response ? error.response.data.message : "An unexpected error occurred.";
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
