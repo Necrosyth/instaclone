@@ -13,6 +13,8 @@ import { setSocket } from './redux/socketSlice'
 import { setOnlineUsers } from './redux/chatSlice'
 import { setLikeNotification } from './redux/rtnSlice'
 import ProtectedRoutes from './components/ProtectedRoutes'
+import { toast } from 'sonner';
+import axios from 'axios';
 
 
 const browserRouter = createBrowserRouter([
@@ -59,9 +61,20 @@ function App() {
         query: {
           userId: user?._id
         },
-        transports: ['websocket']
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
       });
-      dispatch(setSocket(socketio));
+
+      socketio.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+
+      socketio.on('connect', () => {
+        console.log('Socket connected successfully');
+        dispatch(setSocket(socketio));
+      });
 
       // listen all the events
       socketio.on('getOnlineUsers', (onlineUsers) => {

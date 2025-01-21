@@ -6,6 +6,10 @@ import { useSelector } from 'react-redux';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { AtSign, Heart, MessageCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { setUserProfile } from '@/redux/authSlice';
 
 const Profile = () => {
   const params = useParams();
@@ -14,9 +18,32 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
 
   const { userProfile, user } = useSelector(store => store.auth);
+  const dispatch = useDispatch();
 
   const isLoggedInUserProfile = user?._id === userProfile?._id;
-  const isFollowing = false;
+  const isFollowing = userProfile?.followers?.includes(user?._id);
+
+  const followHandler = async () => {
+    try {
+      const res = await axios.post(`http://localhost:8000/api/v1/user/followorunfollow/${userProfile?._id}`, {}, {
+        withCredentials: true
+      });
+      if (res.data.success) {
+        const updatedUserProfile = {
+          ...userProfile,
+          followers: isFollowing 
+            ? userProfile.followers.filter(id => id !== user._id)
+            : [...userProfile.followers, user._id]
+        };
+        dispatch(setUserProfile(updatedUserProfile));
+        toast.success(res.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "An error occurred");
+    }
+  };
+  
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -48,11 +75,13 @@ const Profile = () => {
                   ) : (
                     isFollowing ? (
                       <>
-                        <Button variant='secondary' className='h-8'>Unfollow</Button>
+                        <Button onClick={followHandler} variant='secondary' className='h-8'>Unfollow</Button>
                         <Button variant='secondary' className='h-8'>Message</Button>
                       </>
                     ) : (
-                      <Button className='bg-[#0095F6] hover:bg-[#3192d2] h-8'>Follow</Button>
+                      <Button onClick={followHandler} className='bg-[#0095F6] hover:bg-[#3192d2] h-8'>
+                        Follow
+                      </Button>
                     )
                   )
                 }
